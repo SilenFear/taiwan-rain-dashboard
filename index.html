@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c171a">
+  <meta name="description" content="全台即時雨量看板：中央氣象署雨量觀測、過去一小時雨量排行、每十分鐘自動更新。">
+  <title>山雨 RAIN WATCH｜全台即時雨量看板</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="山雨首頁"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M3 27 13 9l8 13 5-8 7 13M11 27l6-10M13 9l3 5"/></svg><span>山雨<span class="brand-en">RAIN WATCH</span></span></a>
+      <a class="header-link" href="#stations">查看測站 <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="title">
+        <div>
+          <p class="eyebrow"><span class="live-dot"></span> TAIWAN RAINFALL OBSERVATORY</p>
+          <h1 id="title">下一段山路，<br><span>先看雨。</span></h1>
+          <p class="hero-copy">全台即時雨量看板<span class="divider">/</span>過去 1 小時，哪裡雨最大？</p>
+          <p class="hero-note">中央氣象署觀測資料 · 每 10 分鐘更新 · 觀測參考，非天氣預報</p>
+        </div>
+        <div class="update-box">
+          <div class="update-top"><span id="connection" class="connection">連線中</span><span class="small-label">NEXT UPDATE</span></div>
+          <div class="countdown"><span id="countdown">10:00</span><span class="countdown-unit">後自動更新</span></div>
+          <button id="refresh" class="refresh-button" type="button"><span aria-hidden="true">↻</span> 立即更新</button>
+          <div class="time-row"><span>資料觀測</span><time id="observation-time">讀取中</time></div>
+          <div class="time-row"><span>網頁抓取</span><time id="fetch-time">尚未完成</time></div>
+        </div>
+      </section>
+
+      <div id="status" class="status" role="status" aria-live="polite">正在向中央氣象署取得全台雨量觀測資料…</div>
+      <div id="stale-warning" class="notice warning" role="status" hidden>資料可能延遲：資料觀測時間已超過 30 分鐘，或資料時間超過 30 分鐘未變。請留意資料時間。</div>
+      <div id="rain-warning" class="notice rain-warning" role="status" hidden></div>
+
+      <section class="metrics" aria-label="全台雨量重點數字">
+        <article class="metric primary"><p class="metric-label">全台最高 1 小時雨量 <span>01</span></p><div class="metric-value"><strong id="max-rain">—</strong><span>mm</span></div><p id="max-station" class="metric-caption">等待最新觀測</p></article>
+        <article class="metric"><p class="metric-label">有雨測站 <span>02</span></p><div class="metric-value"><strong id="wet-count">—</strong><span>站</span></div><p class="metric-caption">過去 1 小時雨量大於 0 mm</p></article>
+        <article class="metric alert-metric"><p class="metric-label">達警示門檻 <span>03</span></p><div class="metric-value"><strong id="alert-count">—</strong><span>站</span></div><p class="metric-caption">1 小時雨量 ≥ 40 mm</p></article>
+        <article class="metric"><p class="metric-label">有效觀測測站 <span>04</span></p><div class="metric-value"><strong id="valid-count">—</strong><span>站</span></div><p id="coverage" class="metric-caption">全台測站資料載入中</p></article>
+      </section>
+
+      <section class="explore-controls" aria-label="測站搜尋與篩選">
+        <label class="search-field"><span class="sr-only">搜尋測站或鄉鎮</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg><input id="search" type="search" placeholder="搜尋測站、鄉鎮或代碼" autocomplete="off"></label>
+        <label class="select-field"><span class="sr-only">縣市</span><select id="county"><option value="">全台縣市</option></select></label>
+        <label class="select-field"><span class="sr-only">雨量條件</span><select id="rain-filter"><option value="all">全部雨量</option><option value="wet">有雨測站</option><option value="alert">≥ 40 mm 警示</option><option value="missing">無有效觀測</option></select></label>
+        <button id="reset" class="text-button" type="button">重設</button>
+      </section>
+
+      <div class="charts-grid">
+        <section class="panel ranking-panel" aria-labelledby="ranking-title">
+          <div class="section-heading"><div><p class="eyebrow muted">RAINFALL RANKING</p><h2 id="ranking-title">雨，落在哪裡</h2></div><span class="pill">1 小時 · mm</span></div>
+          <p class="section-description">目前篩選範圍內雨量最高的 8 站</p>
+          <div id="ranking" class="ranking"><p class="empty-state">等待觀測資料</p></div>
+          <div class="legend"><span><i class="swatch"></i> 1 小時雨量</span><span><i class="swatch amber"></i> ≥ 40 mm 警示</span></div>
+        </section>
+
+        <section class="panel trend-panel" aria-labelledby="trend-title">
+          <div class="section-heading"><div><p class="eyebrow muted">SINCE YOU OPENED</p><h2 id="trend-title">這段時間的雨勢</h2></div><span id="history-count" class="pill">0 筆</span></div>
+          <p class="section-description">每次成功更新，記錄一次「全台最高 1 小時雨量」</p>
+          <div id="trend" class="trend"><p class="empty-state">成功取得資料後開始記錄</p></div>
+          <p id="trend-note" class="chart-note">開啟後累積的觀測紀錄；不補造歷史資料。此圖不受搜尋篩選影響。</p>
+        </section>
+      </div>
+
+      <section id="stations" class="panel stations-panel" aria-labelledby="stations-title">
+        <div class="section-heading"><div><p class="eyebrow muted">STATION EXPLORER</p><h2 id="stations-title">測站觀測</h2></div><span id="result-count" class="pill">等待資料</span></div>
+        <p class="section-description">依 1 小時雨量由高到低排列；無效觀測不列入統計。</p>
+        <div class="table-wrap"><table><thead><tr><th scope="col">測站 / 地區</th><th scope="col">1 小時<span>mm</span></th><th scope="col" class="extra-column">10 分鐘<span>mm</span></th><th scope="col" class="extra-column">24 小時<span>mm</span></th><th scope="col">狀態 / 觀測</th></tr></thead><tbody id="station-rows"><tr><td colspan="5" class="empty-state">正在讀取測站…</td></tr></tbody></table></div>
+        <div class="pagination"><span id="page-info">—</span><div><button id="previous" type="button" aria-label="上一頁" disabled>←</button><button id="next" type="button" aria-label="下一頁" disabled>→</button></div></div>
+      </section>
+
+      <aside class="reading-note"><span aria-hidden="true">↗</span><p><strong>出發前，再確認一次。</strong>測站雨量是過去的觀測，不能代表整條路線的天氣。請一併查看<a href="https://www.cwa.gov.tw/V8/C/P/Warning/W26.html" target="_blank" rel="noopener noreferrer">氣象署大雨特報</a>與目的地天氣資訊。</p></aside>
+    </main>
+
+    <footer>
+      <div class="footer-top"><span class="footer-brand">山雨 <span>RAIN WATCH</span></span><span class="signature">資通四勤 121271020 周柏睿</span></div>
+      <p>資料提供：交通部中央氣象署 · <a href="https://data.gov.tw/dataset/9177" target="_blank" rel="noopener noreferrer">雨量觀測站－雨量資料（O-A0002-001）↗</a></p>
+      <p>資料取用：<a href="https://cwaopendata.s3.ap-northeast-1.amazonaws.com/Observation/O-A0002-001.json" target="_blank" rel="noopener noreferrer">同一資料集的官方公開 JSON</a>（由政府資料開放平台下載連結導向，免個人授權碼）。每 10 分鐘更新。</p>
+      <p>授權：<a href="https://data.gov.tw/license" target="_blank" rel="noopener noreferrer">政府資料開放授權條款－第 1 版</a>。負值、空白與非數值觀測標為無資料，不當成 0 mm 計算。</p>
+    </footer>
+  </div>
+</body>
+</html>
