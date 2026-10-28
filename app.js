@@ -41,7 +41,7 @@ function renderFiltered() {
 function renderRanking() {
   const rows = state.filtered.filter(s=>s.rain!==null).slice(0,8);
   if (!rows.length) { $('ranking').innerHTML='<p class="empty-state">此篩選範圍沒有有效雨量觀測<br>試試其他縣市或搜尋條件</p>';return; }
-  const ceiling = Math.max(ALERT_MM, rows[0].rain);
+  const ceiling = Math.max(1, rows[0].rain);
   $('ranking').innerHTML=rows.map((s,i)=>`<div class="rank-row"><span class="rank-number">${String(i+1).padStart(2,'0')}</span><div class="rank-name" title="${escape(`${s.county} ${s.town} ${s.name}`)}">${escape(s.name)}<small>${escape(s.county+' '+s.town)}</small></div><div class="bar-track" aria-hidden="true"><div class="bar-fill ${s.rain>=ALERT_MM?'alert':''}" style="width:${s.rain/ceiling*100}%"></div></div><span class="rank-value">${mm(s.rain)}</span></div>`).join('');
 }
 function renderTable() {
